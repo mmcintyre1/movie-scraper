@@ -13,6 +13,11 @@ BASE_PARAMS = {
     "format": "json",
 }
 
+# TODO clean up titles (film) (year film)
+# TODO get more metadata from results
+# TODO write parsers to go to page and get acting list
+# TODO clean up that acting list
+
 
 def get_cm_continue(data):
     try:
@@ -29,7 +34,7 @@ def get_cat_data(session, params):
 def get_titles(data):
     for page in data['query']['categorymembers']:
         if not page['title'].startswith('Category:'):
-            yield page['title']
+            yield page
 
 
 def get_year_results(session, year):
@@ -54,11 +59,11 @@ def main():
     with requests.session() as session:
         all_data = {}
         for year in range(START_YEAR, END_YEAR+1):
-            print(f'getting movies from {year}')
+            print(f'Getting movies from {year}')
             all_data[year] = get_year_results(session, year)
 
     with open('./data/all_movies.json', 'w', encoding='utf-8') as json_out:
-        json.dump(all_data, json_out)
+        json.dump(all_data, json_out, indent=4)
 
 
 if __name__ == '__main__':
