@@ -1,0 +1,12 @@
+# pycharm files
+.idea
+
+# python cache files
+*__pycache__*
+
+# data output files
+data/
+
+# api key
+secrets.py
+
