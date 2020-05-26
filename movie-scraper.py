@@ -1,54 +1,52 @@
+from bs4 import BeautifulSoup
 import datetime
-import re
 import json
+import re
 
 import requests
 
-START_YEAR = 1874
+# TODO write parsers to go to page and get acting list
+# TODO clean up that acting list
+
+START_YEAR = 1940
 END_YEAR = datetime.datetime.today().year
 
 BASE_URL = "https://en.wikipedia.org/w/api.php"
-BASE_PARAMS = {
-    "action": "query",
-    "cmlimit": 500,
-    "list": "categorymembers",
-    "format": "json",
-}
-
-
-# TODO clean up titles (film) (year film)
-# TODO get more metadata from results
-# TODO write parsers to go to page and get acting list
-# TODO clean up that acting list
 
 
 def get_year_results(session, year):
     """
     Top level wrapper function to iterate through all the
     years between the global START_YEAR and END_YEAR and extend
-    the all_titles list. Takes care of page continuations via the
-    cm_continue key in BASE_PARAMS.
+    the all_titles list.  If there is a cmcontinue, that signals
+    there are more results, and the function iterates until that
+    value is empty in the response.
     :param session: a requests session object
     :param year: a year to find movie categories for
     :return: a list of all movie data per year
     """
-    BASE_PARAMS['cmtitle'] = f"Category:{year}_films"
-    BASE_PARAMS['cmcontinue'] = ""
+    params = {
+        "list": "categorymembers",
+        "cmtitle": f"Category:{year}_films",
+        "action": "query",
+        "cmlimit": 500,
+        "format": "json",
+    }
 
     all_titles = []
 
     while True:
-        cat_page = get_cat_data(session, BASE_PARAMS)
+        cat_page = get_cat_data(session, params)
         for page_data in get_page_data(cat_page):
             all_titles.append({
                 'title': clean_title(page_data['title']),
-                'actors': get_actor_data(page_data['pageid'])
+                'actors': get_actor_data(session, page_data['title'])
             })
 
         cm_continue = get_cm_continue(cat_page)
 
         if cm_continue:
-            BASE_PARAMS['cmcontinue'] = cat_page['continue']['cmcontinue']
+            params['cmcontinue'] = cat_page['continue']['cmcontinue']
 
         else:
             return all_titles
@@ -88,17 +86,38 @@ def get_page_data(data):
     :return: a dictionary result
     """
     for page in data['query']['categorymembers']:
-        if not page['title'].startswith('Category:'):
+        if not page['title'].startswith(('Category:', 'List of ')):
             yield page
 
 
-def get_actor_data(pageid):
+def get_actor_data(session, title):
     """
-    Takes in a page_id, which is returned from
-    :param pageid:
+    :param session:
+    :param title:
     :return:
     """
+    cast_section = get_cast_section(session, title)
+
     return []
+
+
+def get_cast_section(session, title):
+    """
+
+    :param session:
+    :param title:
+    :return:
+    """
+    params = {
+        "action": "parse",
+        "page": title,
+        "prop": "section",
+    }
+    results = session.get(BASE_URL, params=params)
+
+    for section in results.json()["parse"]["sections"]:
+        if "Cast" in section["line"]:
+            return section["index"]
 
 
 def clean_title(title):
@@ -109,7 +128,7 @@ def clean_title(title):
     :return: a cleaned up title string
     """
     film_pattern = r"\([0-9]{0,4}\s{0,1}film\)"
-    return re.sub(film_pattern, "", title)
+    return re.sub(film_pattern, "", title).strip()
 
 
 def main():
@@ -119,8 +138,8 @@ def main():
             print(f'Getting movies from {year}')
             all_data[year] = get_year_results(session, year)
 
-    with open('./data/all_movies.json', 'w') as json_out:
-        json.dump(all_data, json_out, indent=4)
+    with open('./data/all_movies.json', 'w', encoding="utf-8") as json_file:
+        json.dump(all_data, json_file, ensure_ascii=False, indent=4)
 
 
 if __name__ == '__main__':
