@@ -20,6 +20,13 @@ BASE_PARAMS = {
 
 
 def get_cm_continue(data):
+    """
+    If there is a cm_continue attribute in the response JSON, it means
+    the results are paged and this value needs to be fed in the params
+    to subsequent queries to get additional results.
+    :param data: a JSON object returned from the wikipedia api
+    :return: either the cm_continue value or None
+    """
     try:
         return data['continue']['cmcontinue']
     except KeyError:
@@ -27,17 +34,39 @@ def get_cm_continue(data):
 
 
 def get_cat_data(session, params):
+    """
+    Gets the category data per the passed in params and the global
+    constant BASE_URL.
+    :param session: a requests session object
+    :param params: a dictionary of parameters to pass to the get request
+    :return: the JSON results
+    """
     results = session.get(url=BASE_URL, params=params)
     return results.json()
 
 
-def get_titles(data):
+def get_page_data(data):
+    """
+    Gets the data for a page and excludes titles that start with
+    'Category:' as subcategories are returned as part of the results.
+    :param data: a JSON object returned from the wikipedia api
+    :return: a dictionary result
+    """
     for page in data['query']['categorymembers']:
         if not page['title'].startswith('Category:'):
             yield page
 
 
 def get_year_results(session, year):
+    """
+    Top level wrapper function to iterate through all the
+    years between the global START_YEAR and END_YEAR and extend
+    the all_titles list. Takes care of page continuations via the
+    cm_continue key in BASE_PARAMS.
+    :param session: a requests session object
+    :param year: a year to find movie categories for
+    :return: a list of all movie data per year
+    """
     BASE_PARAMS['cmtitle'] = f"Category:{year}_films"
     BASE_PARAMS['cmcontinue'] = ""
 
@@ -45,7 +74,7 @@ def get_year_results(session, year):
 
     while True:
         cat_page = get_cat_data(session, BASE_PARAMS)
-        all_titles.extend(list(get_titles(cat_page)))
+        all_titles.extend(list(get_page_data(cat_page)))
         cm_continue = get_cm_continue(cat_page)
 
         if cm_continue:
