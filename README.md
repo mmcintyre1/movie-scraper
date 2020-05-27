@@ -5,4 +5,7 @@ This will be cleaned up and put in a database, and then fed into the 6 degrees o
 
 This is leveraging the API documented here: https://www.mediawiki.org/wiki/API:Main_page.
 
+## Additional Thoughts
+Once the titles are parsed, they might be able to be bumped up against IMDB's API, or OMDB's API, although the latter doesn't give nearly as full a cast list as wikipedia parsing.
+
 
