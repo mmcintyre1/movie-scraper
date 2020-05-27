@@ -1,13 +1,11 @@
-from bs4 import BeautifulSoup
 import datetime
 import json
+import logging
 import re
 
 import requests
 
-# TODO write parsers to go to page and get acting list
-# TODO clean up that acting list
-
+LOG = logging.getLogger(__name__)
 START_YEAR = 1940
 END_YEAR = datetime.datetime.today().year
 
@@ -96,12 +94,16 @@ def get_actor_data(session, title):
     :param title:
     :return:
     """
-    cast_section = get_cast_section(session, title)
+    print(f"Getting actors from {title}")
+    cast_section_index = get_cast_section_index(session, title)
+
+    if cast_section_index:
+        return get_cast(session, title, cast_section_index)
 
     return []
 
 
-def get_cast_section(session, title):
+def get_cast_section_index(session, title):
     """
 
     :param session:
@@ -111,13 +113,70 @@ def get_cast_section(session, title):
     params = {
         "action": "parse",
         "page": title,
-        "prop": "section",
+        "prop": "sections",
+        "format": "json"
     }
-    results = session.get(BASE_URL, params=params)
+    section_results = session.get(BASE_URL, params=params).json()
 
-    for section in results.json()["parse"]["sections"]:
+    for section in section_results["parse"]["sections"]:
         if "Cast" in section["line"]:
             return section["index"]
+
+
+def get_cast(session, title, cast_section_index):
+    """
+
+    :param session:
+    :param title:
+    :param cast_section_index:
+    :return:
+    """
+    params = {
+        "action": "parse",
+        "prop": "wikitext",
+        "section": cast_section_index,
+        "page": title,
+        "format": "json"
+    }
+
+    cast_results = session.get(BASE_URL, params=params).json()
+    actors = []
+    unparsed_actors = re.split("\n", cast_results["parse"]["wikitext"]["*"])
+    for actor in unparsed_actors:
+
+        cleaned = clean_actor(actor)
+        if cleaned:
+            actors.append(cleaned)
+
+    return actors
+
+
+def clean_actor(actor):
+    """
+
+    :param actors:
+    :return:
+    """
+    bad_characters = {"Cast", "===", "png", "jpg", "gif", "Div col"}
+    removals = {"[", "]", "*", "<br>"}
+    played_by_words = {" as ", "-", "....", "|"}
+
+    # remove bad entries
+    if any(x in actor for x in bad_characters):
+        return None
+
+    # remove unwanted characters
+    for r in removals:
+        actor = actor.replace(r, "")
+
+    # remove portrayals
+    for r in played_by_words:
+        actor = actor.rsplit(r, 1)[0]
+
+    # remove parentheses
+    actor = re.sub(r"\s\(.*\)", "", actor)
+
+    return actor.strip()
 
 
 def clean_title(title):
