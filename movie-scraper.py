@@ -91,9 +91,13 @@ def get_page_data(data):
 
 def get_actor_data(session, title):
     """
-    :param session:
-    :param title:
-    :return:
+    Gets the actor data via a movie title, which needs to be an exact
+    title in wikipedia.  First, the section that the Cast is in is identified
+    via a partial match on "Cast", then the wikitext is pulled down and an
+    actor list is rudimentarily parsed into a list and tacked on to the actors results.
+    :param session: a requests session that all get requests are executed under
+    :param title: an exact wikipedia movie title match
+    :return: a list of actors and if there are none an empty list
     """
     LOG.info(f"Getting actors from {title}")
     cast_section_index = get_cast_section_index(session, title)
@@ -106,10 +110,11 @@ def get_actor_data(session, title):
 
 def get_cast_section_index(session, title):
     """
-
-    :param session:
-    :param title:
-    :return:
+    Gets the section of the wikipedia page where the Cast information likely lives,
+    using a partial match on "Cast".  It's easier than parsing the whole darn page.
+    :param session: a requests session that all requests are executed under
+    :param title: an exact wikipedia movie title match
+    :return: an integer or None
     """
     params = {
         "action": "parse",
@@ -126,10 +131,12 @@ def get_cast_section_index(session, title):
 
 def get_cast(session, title, cast_section_index):
     """
-
-    :param session:
-    :param title:
-    :param cast_section_index:
+    Gets an unparsed list of wikitext from the Cast section of the page and then
+    passes to the cleanup function to parse into a list of just actors and not who
+    they portrayed.
+    :param session: a requests session that all requests are executed under
+    :param title: an exact wikipedia movie title match
+    :param cast_section_index: an integer which is passed to the get request
     :return:
     """
     params = {
@@ -156,9 +163,11 @@ def get_cast(session, title, cast_section_index):
 
 def clean_actor(actor):
     """
-
-    :param actors:
-    :return:
+    Brute force string cleaning at it's finest.  The three sets at the top
+    will likely need to be fine-tuned, but this whole thing is really meant as
+    a one-off data pull anyway.
+    :param actor: an unparsed actor string
+    :return: a parsed actor string
     """
     bad_characters = {"Cast", "===", "png", "jpg", "gif", "Div col"}
     removals = {"[", "]", "*", "<br>"}
