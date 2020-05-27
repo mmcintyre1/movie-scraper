@@ -2,6 +2,7 @@ import datetime
 import json
 import logging
 import re
+import sys
 
 import requests
 
@@ -94,7 +95,7 @@ def get_actor_data(session, title):
     :param title:
     :return:
     """
-    print(f"Getting actors from {title}")
+    LOG.info(f"Getting actors from {title}")
     cast_section_index = get_cast_section_index(session, title)
 
     if cast_section_index:
@@ -142,11 +143,13 @@ def get_cast(session, title, cast_section_index):
     cast_results = session.get(BASE_URL, params=params).json()
     actors = []
     unparsed_actors = re.split("\n", cast_results["parse"]["wikitext"]["*"])
+
     for actor in unparsed_actors:
 
         cleaned = clean_actor(actor)
         if cleaned:
             actors.append(cleaned)
+    LOG.debug(f"unparsed actors: {unparsed_actors}\nparsed actors: {actors}")
 
     return actors
 
@@ -194,7 +197,7 @@ def main():
     with requests.session() as session:
         all_data = {}
         for year in range(START_YEAR, END_YEAR + 1):
-            print(f'Getting movies from {year}')
+            LOG.info(f'Getting movies from {year}')
             all_data[year] = get_year_results(session, year)
 
     with open('./data/all_movies.json', 'w', encoding="utf-8") as json_file:
@@ -202,4 +205,9 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(
+        format="%(filename)s - %(asctime)s - %(name)s - %(levelname)s - %(message)s",
+        level=logging.INFO,
+        stream=sys.stdout
+    )
     main()
