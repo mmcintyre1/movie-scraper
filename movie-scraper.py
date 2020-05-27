@@ -7,7 +7,7 @@ import sys
 import requests
 
 LOG = logging.getLogger(__name__)
-START_YEAR = 1940
+START_YEAR = 1850
 END_YEAR = datetime.datetime.today().year
 
 BASE_URL = "https://en.wikipedia.org/w/api.php"
