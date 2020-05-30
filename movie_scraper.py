@@ -8,9 +8,9 @@ import sys
 import make_actor_lookup
 
 LOG = logging.getLogger(__name__)
-START_YEAR = 1920
-# END_YEAR = datetime.datetime.today().year
-END_YEAR = 1922
+START_YEAR = 1850
+END_YEAR = datetime.datetime.today().year
+
 
 BASE_URL = "https://en.wikipedia.org/w/api.php"
 HEADER = {
@@ -176,7 +176,7 @@ def clean_actor(actor):
     """
     bad_characters = {"Cast", "===", "png", "jpg", "gif", "Div col"}
     removals = {"[", "]", "*", "<br>"}
-    played_by_words = {" as ", "-", "....", "...", "|"}
+    played_by_words = {" as ", "\tas ", "-", " as\t", "–", "....", "...", "|", "…", "<", "{", ":"}
 
     # remove bad entries
     if any(x in actor for x in bad_characters):
