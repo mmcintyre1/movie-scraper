@@ -173,7 +173,7 @@ def clean_actor(actor):
     """
     bad_characters = {"Cast", "===", "png", "jpg", "gif", "Div col"}
     removals = {"[", "]", "*", "<br>"}
-    played_by_words = {" as ", "-", "....", "|"}
+    played_by_words = {" as ", "-", "....", "...", "|"}
 
     # remove bad entries
     if any(x in actor for x in bad_characters):
@@ -185,7 +185,7 @@ def clean_actor(actor):
 
     # remove portrayals
     for r in played_by_words:
-        actor = actor.rsplit(r, 1)[0]
+        actor = actor.rsplit(r, -1)[0]
 
     # remove parentheses
     actor = re.sub(r"\s\(.*\)", "", actor)
