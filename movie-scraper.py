@@ -2,13 +2,15 @@ import datetime
 import json
 import logging
 import re
+import requests
 import sys
 
-import requests
+import make_actor_lookup
 
 LOG = logging.getLogger(__name__)
-START_YEAR = 1850
-END_YEAR = datetime.datetime.today().year
+START_YEAR = 1920
+# END_YEAR = datetime.datetime.today().year
+END_YEAR = 1922
 
 BASE_URL = "https://en.wikipedia.org/w/api.php"
 
@@ -211,6 +213,10 @@ def main():
 
     with open('./data/all_movies.json', 'w', encoding="utf-8") as json_file:
         json.dump(all_data, json_file, ensure_ascii=False, indent=4)
+
+    with open('./data/all_actors.json', 'w', encoding="utf-8") as json_file:
+        actor_json = make_actor_lookup.make_actor_json(all_data)
+        json.dump(actor_json, json_file, ensure_ascii=False, indent=4)
 
 
 if __name__ == '__main__':
