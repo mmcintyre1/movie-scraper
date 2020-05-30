@@ -13,6 +13,9 @@ START_YEAR = 1920
 END_YEAR = 1922
 
 BASE_URL = "https://en.wikipedia.org/w/api.php"
+HEADER = {
+    "User-Agent": "movie-scraper/1.0 (mfmcintyre01@gmail.com) python/3.8"
+}
 
 
 def get_year_results(session, year):
@@ -75,7 +78,7 @@ def get_cat_data(session, params):
     :param params: a dictionary of parameters to pass to the get request
     :return: the JSON results
     """
-    results = session.get(url=BASE_URL, params=params)
+    results = session.get(url=BASE_URL, params=params, headers=HEADER)
     return results.json()
 
 
@@ -124,7 +127,7 @@ def get_cast_section_index(session, title):
         "prop": "sections",
         "format": "json"
     }
-    section_results = session.get(BASE_URL, params=params).json()
+    section_results = session.get(BASE_URL, params=params, headers=HEADER).json()
 
     for section in section_results["parse"]["sections"]:
         if "Cast" in section["line"]:
@@ -149,7 +152,7 @@ def get_cast(session, title, cast_section_index):
         "format": "json"
     }
 
-    cast_results = session.get(BASE_URL, params=params).json()
+    cast_results = session.get(BASE_URL, params=params, headers=HEADER).json()
     actors = []
     unparsed_actors = re.split("\n", cast_results["parse"]["wikitext"]["*"])
 
